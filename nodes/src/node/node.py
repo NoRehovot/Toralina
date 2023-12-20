@@ -21,10 +21,11 @@ class Node(metaclass=Singleton):
         dircom.update_node_list(self, 2)
         self.turn_midpoint_off()
 
-    def get_node_list_from_ds(self):
+    def __get_node_list_from_ds(self):
         self.__node_list = dircom.get_node_list(self)
 
     def get_this_node_list(self):
+        self.__get_node_list_from_ds()
         return self.__node_list
 
     def turn_midpoint_on(self):
