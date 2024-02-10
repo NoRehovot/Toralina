@@ -7,7 +7,6 @@ from nodes.src.client.client_view import load_view
 
 def main():
     n = Node()
-    n.get_node_list_from_ds()
     print("The Toralina node list:")
     print(n.get_this_node_list())
     # app, client_view = load_view()
