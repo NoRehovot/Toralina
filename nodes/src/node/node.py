@@ -1,5 +1,5 @@
 import toralina_common.ip_utils as ipu
-import dir_communication as dircom
+import nodes.src.node.dir_communication as dircom
 from toralina_common.singleton import Singleton
 
 
@@ -8,7 +8,9 @@ class Node(metaclass=Singleton):
         self.__node_socket = ipu.get_free_port_socket()
         self.__node_list = []
         self.__is_midpoint = bool()
+        self.__is_exit_node = bool()
         self.start_node()
+        self.get_node_list_from_ds()
 
     def get_node_socket(self):
         return self.__node_socket
