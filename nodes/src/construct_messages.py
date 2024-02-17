@@ -28,7 +28,9 @@ def encrypt_string(this_str, keys):
 def decrypt_string(this_str, keys):
     for k in keys:
         f = Fernet(k)
+        print(this_str)
         this_str = f.decrypt(this_str)
+        print(this_str)
     return this_str.decode('utf-8')
 
 
@@ -37,14 +39,15 @@ def get_add_node_data(node_details):
 
 
 def get_add_node_msg(circuit_id, data, keys, last_signal):
-    msg = "#-#".join([circuit_id, "1", encrypt_string(last_signal, keys), encrypt_string(data, keys)])
+    msg = "#-#".join([circuit_id, "1", encrypt_string(last_signal, keys).decode('utf-8'), encrypt_string(data, keys).decode('utf-8')])
     return msg
 
 
 def get_confirm_msg(circuit_id, data, keys):
-    msg = "#-#".join([circuit_id, "0", "-", encrypt_string(data, keys)])
+    msg = "#-#".join([circuit_id, "0", "-", encrypt_string(data, keys).decode('utf-8')])
     return msg
 
 
 def get_send_key_msg(circuit_id, data, keys, last_signal):
-    msg = "#-#".join([circuit_id, "2", encrypt_string(last_signal, keys), encrypt_string(data, keys)])
+    msg = "#-#".join([circuit_id, "2", encrypt_string(last_signal, keys).decode('utf-8'), encrypt_string(data, keys).decode('utf-8')])
+    return msg

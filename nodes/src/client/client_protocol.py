@@ -32,14 +32,14 @@ def inform_circuit(circuit: list, client_socket: socket, circuit_id: str):
     for i in range(3):
         # add node
         add_node_data = get_add_node_data(circuit[i])
-        add_node_msg = get_add_node_msg(circuit_id, encrypt_string(add_node_data, keys), keys, "yes")
+        add_node_msg = get_add_node_msg(circuit_id, add_node_data, keys, "yes")
 
         client_socket.send(add_node_msg.encode('utf-8'))
         response = client_socket.recv(BUFF)
         print(" ".join(response.decode('utf-8').split("#-#")))
 
         new_key = Fernet.generate_key()
-        add_key_msg = get_send_key_msg(circuit_id, new_key, keys, "yes")
+        add_key_msg = get_send_key_msg(circuit_id, new_key.decode('utf-8'), keys, "yes")
 
         client_socket.send(add_key_msg.encode('utf-8'))
         response = client_socket.recv(BUFF)

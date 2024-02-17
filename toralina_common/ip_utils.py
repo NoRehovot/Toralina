@@ -34,7 +34,7 @@ def get_free_port_socket():
 def send_message(msg, send_to):
     with get_free_port_socket() as s:
         s.connect(send_to)
-        s.send(msg.encode('utf-8'))
+        s.send(msg)
         response = s.recv(BUFF)
 
     return response.decode('utf-8')
