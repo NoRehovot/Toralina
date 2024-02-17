@@ -1,4 +1,4 @@
-from dir_server.src.ds.directory_server import DirectoryServer
+from .directory_server import DirectoryServer
 BUFF = 1024  # buffer size for socket communication
 
 """

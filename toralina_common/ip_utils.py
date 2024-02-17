@@ -1,6 +1,8 @@
 import subprocess
 from socket import *
 
+BUFF = 1024
+
 
 def get_this_ip():
     """
@@ -27,3 +29,12 @@ def get_free_port_socket():
     s = socket(AF_INET, SOCK_STREAM)
     s.bind((ip, 0))  # let the system find an open port
     return s
+
+
+def send_message(msg, send_to):
+    with get_free_port_socket() as s:
+        s.connect(send_to)
+        s.send(msg.encode('utf-8'))
+        response = s.recv(BUFF)
+
+    return response.decode('utf-8')

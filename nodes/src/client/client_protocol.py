@@ -2,8 +2,11 @@ import random
 from socket import socket, AF_INET, SOCK_STREAM, SOCK_DGRAM
 from client import Client
 import string
+from nodes.src.construct_messages import *
+from cryptography.fernet import Fernet
 
 CIRCUIT_ID_LENGTH = 15
+BUFF = 1024
 
 
 def choose_circuit(client: Client) -> list:
@@ -25,23 +28,37 @@ def generate_id() -> str:
 
 
 def inform_circuit(circuit: list, client_socket: socket, circuit_id: str):
+    keys = []
     for i in range(3):
-        prev_node = circuit[max(i-1, 0)] if i != 0 else ["", ""]
-        next_node = circuit[min(i + 1, 2)] if i != 2 else ["", ""]
-        msg_list = [prev_node, next_node]
+        # add node
+        add_node_data = get_add_node_data(circuit[i])
+        add_node_msg = get_add_node_msg(circuit_id, encrypt_string(add_node_data, keys), keys, "yes")
 
-        inform_msg = ((str(i) + " " + " ".join(list(map(lambda x: x[0] + "-" + x[1], msg_list))) + " " + circuit_id)
-                      .encode("utf-8"))
+        client_socket.send(add_node_msg.encode('utf-8'))
+        response = client_socket.recv(BUFF)
+        print(" ".join(response.decode('utf-8').split("#-#")))
 
-        client_socket.connect(circuit[i])
-        client_socket.send(inform_msg)
+        new_key = Fernet.generate_key()
+        add_key_msg = get_send_key_msg(circuit_id, new_key, keys, "yes")
+
+        client_socket.send(add_key_msg.encode('utf-8'))
+        response = client_socket.recv(BUFF)
+        print(" ".join(response.decode('utf-8').split("#-#")))
+        keys.append(new_key)
 
 
 def initiate_client() -> list:
     client = Client()
     circuit = choose_circuit(client)
-    circuit_id = generate_id()
+    if circuit:
+        print(circuit)
+        circuit_id = generate_id()
 
-    inform_circuit(circuit, client.get_client_socket(), circuit_id)
+        client_socket = client.get_client_socket()
+        client_socket.connect(circuit[0])
 
-    return circuit
+        inform_circuit(circuit, client_socket, circuit_id)
+
+        return circuit
+    else:
+        print("No circuit")

@@ -1,3 +1,19 @@
+import os
+import sys
+
+
+def sys_append_modules() -> None:
+    """
+    Appends all important modules into sys_path.
+    :returns: None.
+    """
+    parent = '../../../...'
+    module = os.path.abspath(os.path.join(os.path.dirname(__file__), parent))
+    sys.path.append(module)
+
+
+sys_append_modules()
+
 import toralina_common.ip_utils as ipu
 import nodes.src.node.dir_communication as dircom
 from toralina_common.singleton import Singleton
@@ -10,7 +26,7 @@ class Node(metaclass=Singleton):
         self.__is_midpoint = bool()
         self.__is_exit_node = bool()
         self.start_node()
-        self.get_node_list_from_ds()
+        self.__get_node_list_from_ds()
 
     def get_node_socket(self):
         return self.__node_socket
