@@ -24,12 +24,19 @@ class Client(metaclass=Singleton):
         self.__node = Node()
         self.__node.stop_node()
         self.__client_socket = ipu.get_free_port_socket()
+        self.__circuit = []
 
-    def get_node(self):
+    def get_node(self) -> Node:
         return self.__node
 
     def get_client_socket(self):
         return self.__client_socket
+
+    def set_circuit(self, circuit: list):
+        self.__circuit = circuit
+
+    def get_circuit(self) -> list:
+        return self.__circuit
 
     def __del__(self):
         self.__client_socket.close()

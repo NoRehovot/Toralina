@@ -36,22 +36,21 @@ def inform_circuit(circuit: list, client_socket: socket, circuit_id: str):
 
         client_socket.send(add_node_msg.encode('utf-8'))
         response = client_socket.recv(BUFF)
-        print(" ".join(response.decode('utf-8').split("#-#")))
 
         new_key = Fernet.generate_key()
         add_key_msg = get_send_key_msg(circuit_id, new_key.decode('utf-8'), keys, "yes")
 
         client_socket.send(add_key_msg.encode('utf-8'))
         response = client_socket.recv(BUFF)
-        print(" ".join(response.decode('utf-8').split("#-#")))
+
         keys.append(new_key)
+        print(f"Added Node {i+1} to circuit")
 
 
-def initiate_client() -> list:
-    client = Client()
+def initiate_client(client):
     circuit = choose_circuit(client)
     if circuit:
-        print(circuit)
+        print("Found Circuit")
         circuit_id = generate_id()
 
         client_socket = client.get_client_socket()
@@ -59,6 +58,4 @@ def initiate_client() -> list:
 
         inform_circuit(circuit, client_socket, circuit_id)
 
-        return circuit
-    else:
-        print("No circuit")
+        client.set_circuit(circuit)

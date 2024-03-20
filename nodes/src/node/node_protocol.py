@@ -3,7 +3,6 @@ from node import Node
 import select
 from nodes.src.construct_messages import *
 from toralina_common.ip_utils import send_message
-from cryptography.fernet import Fernet
 
 BUFF = 1024  # buffer size for socket communication
 
@@ -24,8 +23,8 @@ def pass_confirm_msg(response, from_socket, id_to_key):
 
 
 def handle_add_node(node_socket, id_to_circuit, circuit_id, last_signal, data, id_to_key, from_socket):
+    print("INFO: received add node msg")
     if circuit_id in id_to_circuit.keys():
-        print(data)
         data = decrypt_string(data.encode('utf-8'), [id_to_key[circuit_id]])
         last_signal = decrypt_string(last_signal.encode('utf-8'), [id_to_key[circuit_id]])
         if last_signal == "yes":
@@ -34,7 +33,7 @@ def handle_add_node(node_socket, id_to_circuit, circuit_id, last_signal, data, i
             add_node_msg = get_add_node_msg(circuit_id, data, [], last_signal)
             response = send_message(add_node_msg.encode('utf-8'), new_node)  # send forward and get confirmation
 
-            print("got confirmation for added node")
+            print("INFO: got confirmation for added node")
             pass_confirm_msg(response, from_socket, id_to_key)  # pass confirmation back to client
 
             id_to_circuit[circuit_id] = new_node
@@ -43,33 +42,32 @@ def handle_add_node(node_socket, id_to_circuit, circuit_id, last_signal, data, i
             add_node_msg = get_add_node_msg(circuit_id, data, [], last_signal)
             response = send_message(add_node_msg.encode('utf-8'), next_node)  # send forward and get confirmation
 
-            print("got confirmation for added node")
+            print("INFO: got confirmation for added node")
             pass_confirm_msg(response, from_socket, id_to_key)  # pass confirmation back to client
     else:
-        print("added circuit to dictionary")
         id_to_circuit[circuit_id] = (None, None)
         response = get_confirm_msg(circuit_id,  " ".join([node_socket.getsockname()[0], str(node_socket.getsockname()[1])]), [])
         from_socket.send(response.encode('utf-8'))
+        print("INFO: added circuit to dictionary")
     return id_to_circuit, id_to_key
 
 
 def handle_add_key(node_socket, id_to_circuit, circuit_id, last_signal, data, id_to_key, from_socket):
+    print("INFO: received add key msg")
     if last_signal == "yes":
         id_to_key[circuit_id] = data.encode('utf-8')
-        print("added key to dictionary")
+        print("INFO: added key to dictionary")
         response = get_confirm_msg(circuit_id,
                                    " ".join([node_socket.getsockname()[0], str(node_socket.getsockname()[1])]), [id_to_key[circuit_id]])
         from_socket.send(response.encode('utf-8'))
     else:
-        print(id_to_key.keys())
         data = decrypt_string(data.encode('utf-8'), [id_to_key[circuit_id]])
         last_signal = decrypt_string(last_signal.encode('utf-8'), [id_to_key[circuit_id]])
         next_node = id_to_circuit[circuit_id]
         add_key_msg = get_send_key_msg(circuit_id, data, [], last_signal)
-        print(add_key_msg)
         response = send_message(add_key_msg.encode('utf-8'), next_node)  # send forward and get confirmation
 
-        print("got confirmation for added key")
+        print("INFO: got confirmation for added key")
         pass_confirm_msg(response, from_socket, id_to_key)  # pass confirmation back to client
 
     return id_to_circuit, id_to_key
@@ -111,6 +109,5 @@ def main_node_loop():
                     circuit_id, last_signal, command, data = interpret_circuit_msg(msg)
                     id_to_circuit, id_to_key = handle_message(node_socket, id_to_circuit, circuit_id, last_signal, command, data, command_to_function, id_to_key, s)
                 else:
-                    print("no msg")
                     s.close()
                     inputs.remove(s)

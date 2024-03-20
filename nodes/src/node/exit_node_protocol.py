@@ -7,7 +7,7 @@ def make_request_to_end_point(url, headers=None, data=None):
     try:
         with urlopen(request, timeout=10) as response:
             print(response.status)
-            return response.read(), response
+            return response.read()
     except HTTPError as error:
         print(error.status, error.reason)
     except URLError as error:

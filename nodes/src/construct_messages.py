@@ -19,7 +19,7 @@ from cryptography.fernet import Fernet
 
 def encrypt_string(this_str, keys):
     this_str = this_str.encode('utf-8')
-    for k in keys:
+    for k in reversed(keys):
         f = Fernet(k)
         this_str = f.encrypt(this_str)
     return this_str
@@ -28,9 +28,7 @@ def encrypt_string(this_str, keys):
 def decrypt_string(this_str, keys):
     for k in keys:
         f = Fernet(k)
-        print(this_str)
         this_str = f.decrypt(this_str)
-        print(this_str)
     return this_str.decode('utf-8')
 
 
@@ -51,3 +49,11 @@ def get_confirm_msg(circuit_id, data, keys):
 def get_send_key_msg(circuit_id, data, keys, last_signal):
     msg = "#-#".join([circuit_id, "2", encrypt_string(last_signal, keys).decode('utf-8'), encrypt_string(data, keys).decode('utf-8')])
     return msg
+
+
+def get_network_msg_data(url: str, headers, post_data):
+    return f"{url}"
+
+
+def get_network_msg(circuit_id, data, keys, last_signal):
+    pass
