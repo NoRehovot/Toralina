@@ -51,6 +51,6 @@ def get_node_list(node):
 
     s.send(msg.encode('utf-8'))
     data = s.recv(BUFF).decode('utf-8')
-    node_list = node_list_to_list(data)
+    node_list = node_list_to_list(data) if data else []
     s.close()
     return node_list

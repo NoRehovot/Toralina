@@ -52,6 +52,7 @@ def initiate_client(client):
     if circuit:
         print("Found Circuit")
         circuit_id = generate_id()
+        client.set_circuit_id(circuit_id)
 
         client_socket = client.get_client_socket()
         client_socket.connect(circuit[0])

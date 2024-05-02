@@ -25,6 +25,7 @@ class Client(metaclass=Singleton):
         self.__node.stop_node()
         self.__client_socket = ipu.get_free_port_socket()
         self.__circuit = []
+        self.__circuit_id = None
 
     def get_node(self) -> Node:
         return self.__node
@@ -37,6 +38,12 @@ class Client(metaclass=Singleton):
 
     def get_circuit(self) -> list:
         return self.__circuit
+
+    def set_circuit_id(self, circuit_id: str):
+        self.__circuit_id = circuit_id
+
+    def get_circuit_id(self) -> str:
+        return self.__circuit_id
 
     def __del__(self):
         self.__client_socket.close()

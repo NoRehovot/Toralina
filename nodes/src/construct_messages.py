@@ -1,5 +1,6 @@
 import os
 import sys
+from PyQt5.QtCore import QByteArray
 
 
 def sys_append_modules() -> None:
@@ -51,9 +52,11 @@ def get_send_key_msg(circuit_id, data, keys, last_signal):
     return msg
 
 
-def get_network_msg_data(url: str, headers, post_data):
-    return f"{url}"
+def get_network_msg_data(url: str, header_names, header_values, post_data: QByteArray):
+    return f"{url}:-:{'---'.join(header_names)}:-:{'---'.join(header_values)}:-:{str(post_data)}"
 
 
 def get_network_msg(circuit_id, data, keys, last_signal):
-    pass
+    msg = "#-#".join([circuit_id, "3", encrypt_string(last_signal, keys).decode('utf-8'),
+                      encrypt_string(data, keys).decode('utf-8')])
+    return msg
