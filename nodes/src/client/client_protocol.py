@@ -1,6 +1,6 @@
 import random
 from socket import socket, AF_INET, SOCK_STREAM, SOCK_DGRAM
-from client import Client
+from nodes.src.client.client import Client
 import string
 from nodes.src.construct_messages import *
 from cryptography.fernet import Fernet
@@ -27,7 +27,7 @@ def generate_id() -> str:
     return ''.join([random.choice(letters) for i in range(CIRCUIT_ID_LENGTH)])
 
 
-def inform_circuit(circuit: list, client_socket: socket, circuit_id: str):
+def inform_circuit(client: Client, circuit: list, client_socket: socket, circuit_id: str):
     keys = []
     for i in range(3):
         # add node
@@ -46,6 +46,8 @@ def inform_circuit(circuit: list, client_socket: socket, circuit_id: str):
         keys.append(new_key)
         print(f"Added Node {i+1} to circuit")
 
+    client.set_keys(keys)
+
 
 def initiate_client(client):
     circuit = choose_circuit(client)
@@ -57,6 +59,6 @@ def initiate_client(client):
         client_socket = client.get_client_socket()
         client_socket.connect(circuit[0])
 
-        inform_circuit(circuit, client_socket, circuit_id)
+        inform_circuit(client, circuit, client_socket, circuit_id)
 
         client.set_circuit(circuit)

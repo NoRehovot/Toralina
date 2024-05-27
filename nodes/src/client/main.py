@@ -8,12 +8,12 @@ def main():
     client = Client()
     app = QApplication([])
 
-    # while not client.get_circuit():
-    #     initiate_client(client)
+    while not client.get_circuit():
+        initiate_client(client)
 
-    cv = ClientView(client)
+    cv = ClientView()
 
-    load_view(cv, app)
+    load_view(cv, app, client)
 
 
 if __name__ == "__main__":

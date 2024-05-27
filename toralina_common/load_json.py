@@ -19,3 +19,15 @@ def load_config() -> tuple:
 
     except FileNotFoundError as file_error:
         print(f'[!] {file_error} doesnt exist!')
+
+
+def load_proxy() -> tuple:
+    try:
+        with open(full_path(JSON_FILE)) as conf:
+            data = json.loads(conf.read())
+
+        proxy = data.get('proxy')
+        return proxy["ip"], proxy["port"]
+
+    except FileNotFoundError as file_error:
+        print(f'[!] {file_error} doesnt exist!')

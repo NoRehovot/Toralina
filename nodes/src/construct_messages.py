@@ -52,11 +52,43 @@ def get_send_key_msg(circuit_id, data, keys, last_signal):
     return msg
 
 
-def get_network_msg_data(url: str, header_names, header_values, post_data: QByteArray):
-    return f"{url}:-:{'---'.join(header_names)}:-:{'---'.join(header_values)}:-:{str(post_data)}"
+def get_network_msg_data(url: str, header_names, header_values, post_data):
+    if header_names and post_data:
+        return f"{url}:-:{'---'.join(header_names)}:-:{'---'.join(header_values)}:-:{post_data}"
+    elif header_names:
+        return f"{url}:-:{'---'.join(header_names)}:-:{'---'.join(header_values)}:-: "
+    else:
+        return f"{url}:-: :-: :-: "
+
+
+def unpack_network_msg_data(data: str):
+    data = data.split(":-:")
+    url = data[0]
+
+    headers = {}
+
+    if data[1] != " ":
+        header_names = data[1].split("---")
+        header_values = data[2].split("---")
+
+        for i in range(len(header_names)):
+            headers[header_names[i]] = header_values[i]
+
+    post_data = None
+
+    if data[3] != " ":
+        post_data = data[3]
+
+    return url, headers, post_data
 
 
 def get_network_msg(circuit_id, data, keys, last_signal):
     msg = "#-#".join([circuit_id, "3", encrypt_string(last_signal, keys).decode('utf-8'),
                       encrypt_string(data, keys).decode('utf-8')])
+    return msg
+
+
+def get_end_network_msg(circuit_id, keys, last_signal):
+    msg = "#-#".join([circuit_id, "4", encrypt_string(last_signal, keys).decode('utf-8'),
+                      encrypt_string(" ", keys).decode('utf-8')])
     return msg

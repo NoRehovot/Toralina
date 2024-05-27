@@ -38,3 +38,17 @@ def send_message(msg, send_to):
         response = s.recv(BUFF)
 
     return response.decode('utf-8')
+
+
+def send_network_msg(msg, send_to):
+    with get_free_port_socket() as s:
+        s.connect(send_to)
+        s.send(msg)
+
+        response = s.recv(BUFF)
+        data = b''
+        while response:
+            data += response
+            response = s.recv(BUFF)
+
+    return response.decode('utf-8')

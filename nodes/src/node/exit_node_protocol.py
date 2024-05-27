@@ -4,9 +4,9 @@ from urllib.error import HTTPError, URLError
 
 def make_request_to_end_point(url, headers=None, data=None):
     request = Request(url, headers=headers or {}, data=data)
+    print()
     try:
         with urlopen(request, timeout=10) as response:
-            print(response.status)
             return response.read()
     except HTTPError as error:
         print(error.status, error.reason)
