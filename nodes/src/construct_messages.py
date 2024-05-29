@@ -18,19 +18,22 @@ sys_append_modules()
 from cryptography.fernet import Fernet
 
 
-def encrypt_string(this_str, keys):
-    this_str = this_str.encode('utf-8')
+def encrypt_string(this_str, keys, should_encode=True):
+    if should_encode:
+        this_str = this_str.encode('utf-8')
     for k in reversed(keys):
         f = Fernet(k)
         this_str = f.encrypt(this_str)
     return this_str
 
 
-def decrypt_string(this_str, keys):
+def decrypt_string(this_str, keys, should_decode=True):
     for k in keys:
         f = Fernet(k)
         this_str = f.decrypt(this_str)
-    return this_str.decode('utf-8')
+    if should_decode:
+        this_str = this_str.decode('utf-8')
+    return this_str
 
 
 def get_add_node_data(node_details):
@@ -52,43 +55,27 @@ def get_send_key_msg(circuit_id, data, keys, last_signal):
     return msg
 
 
-def get_network_msg_data(url: str, header_names, header_values, post_data):
-    if header_names and post_data:
-        return f"{url}:-:{'---'.join(header_names)}:-:{'---'.join(header_values)}:-:{post_data}"
-    elif header_names:
-        return f"{url}:-:{'---'.join(header_names)}:-:{'---'.join(header_values)}:-: "
-    else:
-        return f"{url}:-: :-: :-: "
+def get_file_msg_data(filename: str, dest: str, src: str):
+    return f"{filename}:--:{dest}:--:{src}"
 
 
-def unpack_network_msg_data(data: str):
-    data = data.split(":-:")
-    url = data[0]
+def unpack_msg_data(data: str):
+    data = data.split(":--:")
 
-    headers = {}
-
-    if data[1] != " ":
-        header_names = data[1].split("---")
-        header_values = data[2].split("---")
-
-        for i in range(len(header_names)):
-            headers[header_names[i]] = header_values[i]
-
-    post_data = None
-
-    if data[3] != " ":
-        post_data = data[3]
-
-    return url, headers, post_data
+    return data[0], data[1], data[2]
 
 
-def get_network_msg(circuit_id, data, keys, last_signal):
+def get_file_msg(circuit_id, data, keys, last_signal):
     msg = "#-#".join([circuit_id, "3", encrypt_string(last_signal, keys).decode('utf-8'),
                       encrypt_string(data, keys).decode('utf-8')])
     return msg
 
 
-def get_end_network_msg(circuit_id, keys, last_signal):
+def get_normal_msg_data(data: str, dest: str, src: str):
+    return f"{data}:--:{dest}:-:{src}"
+
+
+def get_normal_msg(circuit_id, data, keys, last_signal):
     msg = "#-#".join([circuit_id, "4", encrypt_string(last_signal, keys).decode('utf-8'),
-                      encrypt_string(" ", keys).decode('utf-8')])
+                      encrypt_string(data, keys).decode('utf-8')])
     return msg

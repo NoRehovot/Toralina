@@ -14,7 +14,7 @@ def node_list_to_string(node_list):
     return " ".join(list(map(lambda x: x[0] + "-" + str(x[1]), node_list)))
 
 
-def send_node_list(client_data):
+def send_node_list(client_data, name):
     """
     Parameters: the client details
     Returns: None
@@ -23,6 +23,18 @@ def send_node_list(client_data):
     """
     ds = DirectoryServer()
     msg = node_list_to_string(ds.get_node_list())
+    client_data[0].send(msg.encode('utf-8'))
+
+
+def send_client_list(client_data, name):
+    ds = DirectoryServer()
+    msg = " ".join(ds.get_client_list())
+    client_data[0].send(msg.encode('utf-8'))
+
+
+def get_client_from_name(client_data, name):
+    ds = DirectoryServer()
+    msg = " ".join((ds.get_client_address(client_data, name)[0], str(ds.get_client_address(client_data, name)[1])))
     client_data[0].send(msg.encode('utf-8'))
 
 
@@ -46,8 +58,13 @@ def parse_args(msg):
     This function parses client message arguments
     """
     code_num = check_code_num(msg[0])
-    client_address = (msg[1], int(msg[2]))
-    return code_num, client_address
+    name = ""
+    if code_num != '4' and code_num != '5' and code_num != '6':
+        client_address = (msg[1], int(msg[2]))
+    else:
+        client_address = (msg[2], int(msg[3]))
+        name = msg[1]
+    return code_num, client_address, name
 
 
 def listen_for_requests(ds_socket):
@@ -62,9 +79,10 @@ def listen_for_requests(ds_socket):
         data = conn.recv(BUFF)
         if data:
             data = data.decode('utf-8').split(" ")
-            code_num, node_address = parse_args(data)
+            print(data)
+            code_num, node_address, name = parse_args(data)
             if code_num:
-                POSSIBLE_ACTIONS[code_num]((conn, node_address))
+                POSSIBLE_ACTIONS[code_num]((conn, node_address), name)
 
 
 def initiate_ds():
@@ -82,7 +100,11 @@ def initiate_ds():
     POSSIBLE_ACTIONS = {
         '0': send_node_list,
         '1': ds.append_node_list,
-        '2': ds.remove_from_node_list
+        '2': ds.remove_from_node_list,
+        '3': send_client_list,
+        '4': ds.append_client_list,
+        '5': ds.remove_from_client_list,
+        '6': get_client_from_name
     }
 
     ds_socket = ds.get_ds_socket()

@@ -1,9 +1,26 @@
-from socket import socket, AF_INET, SOCK_STREAM, SOCK_DGRAM
-from node import Node
+import os
+import sys
+
+
+def sys_append_modules() -> None:
+    """
+    Appends all important modules into sys_path.
+    :returns: None.
+    """
+    parent = '../../../...'
+    module = os.path.abspath(os.path.join(os.path.dirname(__file__), parent))
+    sys.path.append(module)
+
+
+sys_append_modules()
+
+from nodes.src.node.node import Node
 import select
 from nodes.src.construct_messages import *
+from nodes.src.node.dir_communication import get_client_from_name
 from toralina_common.ip_utils import send_message, get_free_port_socket
-from exit_node_protocol import make_request_to_end_point
+from nodes.src.file_operations import send_file_msg, receive_file_msg
+
 
 BUFF = 1024  # buffer size for socket communication
 
@@ -23,119 +40,32 @@ def pass_confirm_msg(response, from_socket, id_to_key):
     from_socket.send(response.encode('utf-8'))
 
 
-def handle_network_msg(node_socket, id_to_circuit, circuit_id, last_signal, data, id_to_key, from_socket):
-    print("INFO: received network msg")
-    if "PADDING" in data:
-        data = data.split("PADDING")[0]
-    try:
-        data = decrypt_string(data.encode('utf-8'), [id_to_key[circuit_id]])
-    except KeyError:
-        response = get_confirm_msg(circuit_id, " ", [])
-        from_socket.send(response.encode('utf-8'))
-        print("sent response")
-        return id_to_circuit, id_to_key
+def handle_file_msg(node_socket, id_to_circuit, circuit_id, last_signal, data, id_to_key, from_socket):
+    print("INFO: received file msg")
+
+    file_msg_data = decrypt_string(data, [id_to_key[circuit_id]])
+
+    from_socket.send(" ".encode('utf-8'))
+
+    file_data = receive_file_msg(from_socket, [id_to_key[circuit_id]])
+
     last_signal = decrypt_string(last_signal.encode('utf-8'), [id_to_key[circuit_id]])
+
     if last_signal == "yes":
-        from_socket.settimeout(2)
-        all_data = ""
-        while data != " ":
-            all_data += data
-            try:
-                interpreted_msg = interpret_circuit_msg(from_socket.recv(BUFF).decode('utf-8'))
-            except IndexError:
-                break
-            except:
-                break
-            if interpreted_msg[2] == '4':
-                break
-            data = decrypt_string(interpreted_msg[3].encode('utf-8'), [id_to_key[circuit_id]])
+        print("\nLAST NODE\n")
+        filename, dest, src = unpack_msg_data(file_msg_data)
 
-        try:
-            url, headers, post_data = unpack_network_msg_data(all_data)
-        except IndexError:
-            url, headers, post_data = None, None, None
-        print("\nMESSAGE DATA:")
-        print(url, headers, post_data)
+        client_data = get_client_from_name(dest)
 
-        if post_data:
-            post_data = post_data.encode('utf-8')
-
-        try:
-            html_data = make_request_to_end_point(url, headers, post_data)
-        except:
-            html_data = None
-
-        print("\nRESPONSE DATA:")
-        print(html_data)
-        try:
-            html_data = html_data.decode('utf-8')
-        except:
-            html_data = str(html_data)
-        if html_data:
-            while data:
-                confirm_msg = get_confirm_msg(circuit_id, html_data[:int(BUFF/8)], [id_to_key[circuit_id]])
-                confirm_msg = confirm_msg + "PADDING" + "A" * (BUFF - len(confirm_msg) - 7)
-                from_socket.send(confirm_msg.encode('utf-8'))
-                if len(html_data) < BUFF/8:
-                    break
-                html_data = html_data[int(BUFF/8):]
-            response = get_confirm_msg(circuit_id, " ", [])
-            from_socket.send(response.encode('utf-8'))
-            print("sent response")
-
-        else:
-            response = get_confirm_msg(circuit_id, " ", [])
-            from_socket.send(response.encode('utf-8'))
-            print("sent response")
+        s = send_file_msg(file_data, file_msg_data, [], circuit_id, client_data, last_signal)
+        print("Sent File")
+        response = s.recv(BUFF).decode('utf-8')
+        print("RESPONSE: " + response)
+        pass_confirm_msg(response, from_socket, id_to_key)
     else:
-        next_node = id_to_circuit[circuit_id]
-        network_msg = get_network_msg(circuit_id, data, [], last_signal)
-
-        with get_free_port_socket() as s:
-            s.connect(next_node)
-            s.send(network_msg.encode('utf-8'))
-
-            while True:
-                next_msg = from_socket.recv(BUFF).decode('utf-8')
-                circuit_id, last_signal, command, data = interpret_circuit_msg(next_msg)
-                try:
-                    last_signal = decrypt_string(last_signal.encode('utf-8'), [id_to_key[circuit_id]])
-                except KeyError:
-                    next_network_msg = get_end_network_msg(circuit_id, [], last_signal)
-                    s.send(next_network_msg.encode('utf-8'))
-                    break
-                if command == '4':
-                    next_network_msg = get_end_network_msg(circuit_id, [], last_signal)
-                    s.send(next_network_msg.encode('utf-8'))
-                    break
-
-                if "PADDING" in data:
-                    data = data.split("PADDING")[0]
-
-                data = decrypt_string(data.encode('utf-8'), [id_to_key[circuit_id]])
-                next_network_msg = get_network_msg(circuit_id, data, [], last_signal)
-                next_network_msg = next_network_msg + "PADDING" + "A" * (BUFF - len(next_network_msg) - 7)
-                s.send(next_network_msg.encode('utf-8'))
-
-            print("Receiving data")
-
-            s.settimeout(2)
-            try:
-                response = s.recv(BUFF).decode('utf-8')
-                while response:
-                    circuit_id, last_signal, command, data = interpret_circuit_msg(response)
-                    if data == " ":
-                        from_socket.send(response.encode('utf-8'))
-                        break
-                    data = data.split("PADDING")[0]
-                    confirm_msg = get_confirm_msg(circuit_id, data, [id_to_key[circuit_id]])
-                    confirm_msg = confirm_msg + "PADDING" + "A" * (BUFF - len(confirm_msg) - 7)
-                    from_socket.send(confirm_msg.encode('utf-8'))
-                    response = s.recv(BUFF).decode('utf-8')
-            except:
-                s.close()
-
-        print("INFO: got confirmation for network msg")
+        s = send_file_msg(file_data, file_msg_data, [], circuit_id, id_to_circuit[circuit_id], last_signal)
+        response = s.recv(BUFF).decode('utf-8')
+        pass_confirm_msg(response, from_socket, id_to_key)
 
     return id_to_circuit, id_to_key
 
@@ -217,7 +147,7 @@ def main_node_loop():
     command_to_function = {
         "1": handle_add_node,
         "2": handle_add_key,
-        "3": handle_network_msg
+        "3": handle_file_msg
     }
 
     while True:
@@ -229,15 +159,16 @@ def main_node_loop():
                     inputs.append(conn)
                 else:
                     msg = s.recv(BUFF).decode('utf-8')
-                    print("\nRecieved MSG: " + msg)
+                    print("\nReceived MSG: " + msg)
                     if msg:
                         try:
                             circuit_id, last_signal, command, data = interpret_circuit_msg(msg)
+                            if command != '4':
+                                id_to_circuit, id_to_key = handle_message(node_socket, id_to_circuit, circuit_id,
+                                                                          last_signal, command,
+                                                                          data, command_to_function, id_to_key, s)
                         except IndexError:
-                            print("hi")
-                        if command != '4':
-                            id_to_circuit, id_to_key = handle_message(node_socket, id_to_circuit, circuit_id, last_signal, command,
-                                                                      data, command_to_function, id_to_key, s)
+                            print("Connection Ended")
                     else:
                         s.close()
                         inputs.remove(s)

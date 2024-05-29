@@ -27,6 +27,8 @@ class DirectoryServer(metaclass=Singleton):
               "IP: " + self.__ds_socket.getsockname()[0] +
               ", PORT: " + str(self.__ds_socket.getsockname()[1]))
         self.__node_list = []  # addresses of all nodes in the toralina network
+        self.__client_list = []
+        self.__client_address_list = []
 
     def get_ds_socket(self):
         return self.__ds_socket
@@ -34,16 +36,41 @@ class DirectoryServer(metaclass=Singleton):
     def get_node_list(self):
         return self.__node_list
 
-    def append_node_list(self, node_details):
+    def append_node_list(self, node_details, name):
         self.__node_list.append(node_details[1])
         print("appended node")
         print(self.__node_list)
 
-    def remove_from_node_list(self, node_details):
+    def remove_from_node_list(self, node_details, name):
         if node_details[1] in self.__node_list:
             self.__node_list.remove(node_details[1])
         print("removed node")
         print(self.__node_list)
+
+    def get_client_list(self):
+        return self.__client_list
+
+    def append_client_list(self, client_details, name):
+        self.__client_list.append(name)
+        self.__client_address_list.append(client_details[1])
+        print("appended client")
+        print(self.__client_list)
+        print(self.__client_address_list)
+
+    def remove_from_client_list(self, client_details, name):
+        if client_details[1] in self.__client_list:
+            self.__client_list.remove(name)
+            self.__client_address_list.remove(client_details[1])
+        print("removed client")
+        print(self.__client_list)
+        print(self.__client_address_list)
+
+    def get_client_address(self, client_details, name):
+        if name in self.__client_list:
+            return self.__client_address_list[self.__client_list.index(name)]
+        else:
+            print("Not In Client List")
+            return None
 
     def __del__(self):
         self.__ds_socket.close()

@@ -1,3 +1,4 @@
+import socket
 import subprocess
 from socket import *
 
@@ -11,10 +12,7 @@ def get_this_ip():
 
     This function returns the computer's ip
     """
-    output = str(subprocess.check_output("ipconfig"))
-    output = output.replace(". ", "").replace(" ", "").replace(r"\r", "").replace(r"\n", ":").split(":")
-    ip = output[output.index("IPv4Address") + 1]
-    return ip
+    return gethostbyname(gethostname())
 
 
 def get_free_port_socket():
@@ -49,6 +47,5 @@ def send_network_msg(msg, send_to):
         data = b''
         while response:
             data += response
-            response = s.recv(BUFF)
 
     return response.decode('utf-8')
