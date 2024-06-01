@@ -116,12 +116,12 @@ def send_file(file_location, dest, client, src):
 
     s = send_file_msg(file_content, file_msg_data, client.get_keys(), client.get_circuit_id(), client.get_circuit()[0])
 
-    # response = s.recv(BUFF).decode("utf-8")
-    #
-    # if response.split("#-#")[1] == '0':
-    #     print("GOT RESPONSE")
-    #
-    # return response
+    response = s.recv(BUFF).decode("utf-8")
+
+    if response.split("#-#")[1] == '0':
+        print("GOT RESPONSE")
+
+    return response
 
 
 def read_file(file_location):
